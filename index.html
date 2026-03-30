@@ -184,6 +184,22 @@
         font-size: 32px;
       }
 
+      .btn-countdown {
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        width: auto;
+        height: auto;
+        white-space: nowrap;
+      }
+
+      .btn-countdown.counting {
+        border-color: #ff9800;
+        color: #ff9800;
+        background: rgba(255, 152, 0, 0.1);
+      }
+
       /* Skip button groups */
       .skip-group {
         display: flex;
@@ -498,6 +514,12 @@
             ><span class="material-icons-round">fast_forward</span></span
           >
         </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+        <button class="btn-countdown" id="btn-countdown" disabled title="3カウント後に最初から再生">
+          <span class="material-icons-round" style="font-size: 16px; vertical-align: middle; margin-right: 4px">timer</span>カウントイン再生
+        </button>
       </div>
 
       <div class="ab-controls">
@@ -928,6 +950,7 @@
         els.btnA.disabled = !enabled;
         els.btnB.disabled = !enabled;
         els.btnAbClear.disabled = !enabled;
+        els.btnCountdown.disabled = !enabled;
       }
 
       // Open file
@@ -1123,6 +1146,59 @@
       }
 
       els.btnAbClear.addEventListener("click", clearAB);
+
+      // Countdown play
+      els.btnCountdown = $("btn-countdown");
+      let countdownTimer = null;
+
+      function playClickSound() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.1);
+      }
+
+      els.btnCountdown.addEventListener("click", () => {
+        if (countdownTimer) {
+          clearInterval(countdownTimer);
+          countdownTimer = null;
+          els.btnCountdown.classList.remove("counting");
+          els.btnCountdown.innerHTML = '<span class="material-icons-round" style="font-size: 16px; vertical-align: middle; margin-right: 4px">timer</span>カウントイン再生';
+          return;
+        }
+
+        initAudioContext();
+        audio.pause();
+        audio.currentTime = 0;
+        els.btnPlay.innerHTML = '<span class="material-icons-round">play_arrow</span>';
+
+        let count = 3;
+        els.btnCountdown.classList.add("counting");
+        els.btnCountdown.textContent = count;
+        playClickSound();
+
+        countdownTimer = setInterval(() => {
+          count--;
+          if (count > 0) {
+            els.btnCountdown.textContent = count;
+            playClickSound();
+          } else {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+            els.btnCountdown.classList.remove("counting");
+            els.btnCountdown.innerHTML = '<span class="material-icons-round" style="font-size: 16px; vertical-align: middle; margin-right: 4px">timer</span>カウントイン再生';
+            audio.play();
+            els.btnPlay.innerHTML = '<span class="material-icons-round">pause</span>';
+          }
+        }, 1000);
+      });
 
       // Keyboard shortcuts
       document.addEventListener("keydown", (e) => {
