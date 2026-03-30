@@ -6,6 +6,7 @@
       "Bash(git diff*)",
       "Bash(git add*)",
       "Bash(git branch*)",
+      "Bash(git push*)",
       "Read",
       "Glob",
       "Grep",
