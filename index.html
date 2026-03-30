@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MP3 Player</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .player {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 32px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .player h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      text-align: center;
+      color: #a0a0c0;
+    }
+
+    .track-name {
+      text-align: center;
+      font-size: 14px;
+      color: #8888aa;
+      margin-bottom: 20px;
+      min-height: 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      position: relative;
+      height: 40px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .progress-bg {
+      position: absolute;
+      top: 14px;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: #2a2a4a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4a6cf7, #6a8cff);
+      border-radius: 6px;
+      transition: width 0.1s linear;
+    }
+
+    .ab-region {
+      position: absolute;
+      top: 14px;
+      height: 12px;
+      background: rgba(255, 170, 50, 0.25);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .ab-marker {
+      position: absolute;
+      top: 6px;
+      width: 3px;
+      height: 28px;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .ab-marker.a { background: #ff9800; }
+    .ab-marker.b { background: #f44336; }
+
+    .ab-label {
+      position: absolute;
+      top: -2px;
+      font-size: 10px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    .ab-label.a { color: #ff9800; }
+    .ab-label.b { color: #f44336; }
+
+    .time-display {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6a6a8a;
+      margin-bottom: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    button {
+      background: none;
+      border: 2px solid #4a4a6a;
+      color: #c0c0e0;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    button:hover { border-color: #6a8cff; color: #fff; }
+    button:disabled { opacity: 0.3; cursor: default; border-color: #4a4a6a; color: #c0c0e0; }
+
+    .btn-sm { width: 40px; height: 40px; font-size: 16px; }
+    .btn-lg { width: 56px; height: 56px; font-size: 22px; }
+
+    /* A-B Repeat */
+    .ab-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .ab-btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      width: auto;
+      height: auto;
+    }
+
+    .ab-btn.active-a { border-color: #ff9800; color: #ff9800; }
+    .ab-btn.active-b { border-color: #f44336; color: #f44336; }
+    .ab-btn.looping { background: rgba(255, 170, 50, 0.15); border-color: #ff9800; color: #ff9800; }
+
+    .ab-status {
+      font-size: 12px;
+      color: #8888aa;
+      min-width: 120px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Volume */
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .volume-row label { font-size: 13px; color: #6a6a8a; }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      background: #2a2a4a;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #6a8cff;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    /* Speed */
+    .speed-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+
+    .speed-row label { font-size: 13px; color: #6a6a8a; }
+
+    .speed-btn {
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      width: auto;
+      height: auto;
+    }
+
+    .speed-btn.active { border-color: #6a8cff; color: #6a8cff; background: rgba(106, 140, 255, 0.1); }
+
+    /* Open file */
+    .open-btn {
+      width: 100%;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 2px dashed #4a4a6a;
+    }
+
+    .open-btn:hover { border-color: #6a8cff; }
+
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+  <div class="player">
+    <h1>MP3 Player</h1>
+    <div class="track-name" id="track-name">ファイルを開いてください</div>
+
+    <div class="progress-container" id="progress-container">
+      <div class="progress-bg">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="ab-region" id="ab-region" style="display:none;"></div>
+      <div class="ab-marker a" id="marker-a" style="display:none;"></div>
+      <div class="ab-marker b" id="marker-b" style="display:none;"></div>
+      <span class="ab-label a" id="label-a" style="display:none;">A</span>
+      <span class="ab-label b" id="label-b" style="display:none;">B</span>
+    </div>
+
+    <div class="time-display">
+      <span id="time-current">0:00</span>
+      <span id="time-duration">0:00</span>
+    </div>
+
+    <div class="controls">
+      <button class="btn-sm" id="btn-back" disabled title="5秒戻る">&#9194;</button>
+      <button class="btn-lg" id="btn-play" disabled title="再生/一時停止">&#9654;</button>
+      <button class="btn-sm" id="btn-forward" disabled title="5秒進む">&#9193;</button>
+    </div>
+
+    <div class="ab-controls">
+      <button class="ab-btn" id="btn-a" disabled title="A地点を設定">A</button>
+      <span class="ab-status" id="ab-status">A-Bリピート: OFF</span>
+      <button class="ab-btn" id="btn-b" disabled title="B地点を設定">B</button>
+      <button class="ab-btn" id="btn-ab-clear" disabled title="リセット">✕</button>
+    </div>
+
+    <div class="volume-row">
+      <label>&#128264;</label>
+      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
+    </div>
+
+    <div class="speed-row">
+      <label>速度:</label>
+      <button class="speed-btn" data-speed="0.5">0.5x</button>
+      <button class="speed-btn" data-speed="0.75">0.75x</button>
+      <button class="speed-btn active" data-speed="1">1x</button>
+      <button class="speed-btn" data-speed="1.25">1.25x</button>
+      <button class="speed-btn" data-speed="1.5">1.5x</button>
+      <button class="speed-btn" data-speed="2">2x</button>
+    </div>
+
+    <button class="open-btn" id="btn-open">&#128193; ファイルを開く</button>
+    <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a">
+  </div>
+
+  <script>
+    const audio = new Audio();
+    const $ = (id) => document.getElementById(id);
+
+    const els = {
+      trackName: $('track-name'),
+      progressContainer: $('progress-container'),
+      progressFill: $('progress-fill'),
+      timeCurrent: $('time-current'),
+      timeDuration: $('time-duration'),
+      btnPlay: $('btn-play'),
+      btnBack: $('btn-back'),
+      btnForward: $('btn-forward'),
+      btnA: $('btn-a'),
+      btnB: $('btn-b'),
+      btnAbClear: $('btn-ab-clear'),
+      abStatus: $('ab-status'),
+      abRegion: $('ab-region'),
+      markerA: $('marker-a'),
+      markerB: $('marker-b'),
+      labelA: $('label-a'),
+      labelB: $('label-b'),
+      volume: $('volume'),
+      btnOpen: $('btn-open'),
+      fileInput: $('file-input'),
+    };
+
+    // State
+    let pointA = null;
+    let pointB = null;
+    let abLooping = false;
+
+    // Format time
+    function fmt(sec) {
+      if (!isFinite(sec)) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // Load file
+    function loadFile(file) {
+      const url = URL.createObjectURL(file);
+      audio.src = url;
+      els.trackName.textContent = file.name;
+      clearAB();
+      audio.load();
+      audio.addEventListener('loadedmetadata', () => {
+        els.timeDuration.textContent = fmt(audio.duration);
+        setControlsEnabled(true);
+      }, { once: true });
+    }
+
+    function setControlsEnabled(enabled) {
+      els.btnPlay.disabled = !enabled;
+      els.btnBack.disabled = !enabled;
+      els.btnForward.disabled = !enabled;
+      els.btnA.disabled = !enabled;
+      els.btnB.disabled = !enabled;
+      els.btnAbClear.disabled = !enabled;
+    }
+
+    // Open file
+    els.btnOpen.addEventListener('click', async () => {
+      if (window.showOpenFilePicker) {
+        try {
+          const [handle] = await window.showOpenFilePicker({
+            types: [{
+              description: 'Audio Files',
+              accept: { 'audio/*': ['.mp3', '.wav', '.ogg', '.flac', '.m4a'] },
+            }],
+            multiple: false,
+          });
+          const file = await handle.getFile();
+          loadFile(file);
+        } catch (e) {
+          if (e.name !== 'AbortError') console.error(e);
+        }
+      } else {
+        els.fileInput.click();
+      }
+    });
+
+    els.fileInput.addEventListener('change', (e) => {
+      if (e.target.files[0]) loadFile(e.target.files[0]);
+    });
+
+    // Play / Pause
+    els.btnPlay.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        els.btnPlay.innerHTML = '&#9646;&#9646;';
+      } else {
+        audio.pause();
+        els.btnPlay.innerHTML = '&#9654;';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      els.btnPlay.innerHTML = '&#9654;';
+    });
+
+    // Skip
+    els.btnBack.addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 5); });
+    els.btnForward.addEventListener('click', () => { audio.currentTime = Math.min(audio.duration, audio.currentTime + 5); });
+
+    // Progress bar seek
+    els.progressContainer.addEventListener('click', (e) => {
+      if (!audio.src) return;
+      const rect = els.progressContainer.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = ratio * audio.duration;
+    });
+
+    // Time update
+    audio.addEventListener('timeupdate', () => {
+      if (!isFinite(audio.duration)) return;
+      const pct = (audio.currentTime / audio.duration) * 100;
+      els.progressFill.style.width = pct + '%';
+      els.timeCurrent.textContent = fmt(audio.currentTime);
+
+      // A-B loop
+      if (abLooping && pointA !== null && pointB !== null) {
+        if (audio.currentTime >= pointB) {
+          audio.currentTime = pointA;
+        }
+      }
+    });
+
+    // Volume
+    audio.volume = 0.8;
+    els.volume.addEventListener('input', (e) => {
+      audio.volume = parseFloat(e.target.value);
+    });
+
+    // Speed
+    document.querySelectorAll('.speed-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        audio.playbackRate = parseFloat(btn.dataset.speed);
+      });
+    });
+
+    // A-B Repeat
+    function positionToPercent(time) {
+      return (time / audio.duration) * 100;
+    }
+
+    function updateABVisuals() {
+      if (pointA !== null) {
+        const pct = positionToPercent(pointA);
+        els.markerA.style.display = 'block';
+        els.markerA.style.left = `calc(${pct}% - 1px)`;
+        els.labelA.style.display = 'block';
+        els.labelA.style.left = `calc(${pct}% - 3px)`;
+      } else {
+        els.markerA.style.display = 'none';
+        els.labelA.style.display = 'none';
+      }
+
+      if (pointB !== null) {
+        const pct = positionToPercent(pointB);
+        els.markerB.style.display = 'block';
+        els.markerB.style.left = `calc(${pct}% - 1px)`;
+        els.labelB.style.display = 'block';
+        els.labelB.style.left = `calc(${pct}% - 3px)`;
+      } else {
+        els.markerB.style.display = 'none';
+        els.labelB.style.display = 'none';
+      }
+
+      if (pointA !== null && pointB !== null) {
+        const pctA = positionToPercent(pointA);
+        const pctB = positionToPercent(pointB);
+        els.abRegion.style.display = 'block';
+        els.abRegion.style.left = pctA + '%';
+        els.abRegion.style.width = (pctB - pctA) + '%';
+      } else {
+        els.abRegion.style.display = 'none';
+      }
+
+      // Status text
+      if (pointA !== null && pointB !== null) {
+        els.abStatus.textContent = `A-Bリピート: ${fmt(pointA)} → ${fmt(pointB)}`;
+        els.btnA.classList.add('active-a');
+        els.btnB.classList.add('active-b');
+      } else if (pointA !== null) {
+        els.abStatus.textContent = `A: ${fmt(pointA)} — B地点を設定`;
+        els.btnA.classList.add('active-a');
+        els.btnB.classList.remove('active-b');
+      } else {
+        els.abStatus.textContent = 'A-Bリピート: OFF';
+        els.btnA.classList.remove('active-a');
+        els.btnB.classList.remove('active-b');
+      }
+
+      if (abLooping) {
+        els.btnA.classList.add('looping');
+        els.btnB.classList.add('looping');
+      } else {
+        els.btnA.classList.remove('looping');
+        els.btnB.classList.remove('looping');
+      }
+    }
+
+    els.btnA.addEventListener('click', () => {
+      if (pointA !== null && pointB !== null) {
+        // Already have both points - reset and set new A
+        pointB = null;
+        abLooping = false;
+      }
+      pointA = audio.currentTime;
+      updateABVisuals();
+    });
+
+    els.btnB.addEventListener('click', () => {
+      if (pointA === null) return;
+      const b = audio.currentTime;
+      if (b <= pointA) return; // B must be after A
+      pointB = b;
+      abLooping = true;
+      audio.currentTime = pointA;
+      updateABVisuals();
+    });
+
+    function clearAB() {
+      pointA = null;
+      pointB = null;
+      abLooping = false;
+      updateABVisuals();
+    }
+
+    els.btnAbClear.addEventListener('click', clearAB);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          els.btnPlay.click();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          els.btnBack.click();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          els.btnForward.click();
+          break;
+        case 'KeyA':
+          if (!els.btnA.disabled) els.btnA.click();
+          break;
+        case 'KeyB':
+          if (!els.btnB.disabled) els.btnB.click();
+          break;
+        case 'Escape':
+          if (!els.btnAbClear.disabled) els.btnAbClear.click();
+          break;
+      }
+    });
+  </script>
+</body>
+</html>
