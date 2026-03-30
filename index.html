@@ -1,604 +1,1148 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MP3 Player</title>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MP3 Player</title>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #1a1a2e;
-      color: #e0e0e0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
 
-    .player {
-      background: #16213e;
-      border-radius: 16px;
-      padding: 32px;
-      width: 480px;
-      max-width: 95vw;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
+      .player {
+        background: #16213e;
+        border-radius: 16px;
+        padding: 32px;
+        width: 480px;
+        max-width: 95vw;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transition: box-shadow 0.05s ease-out;
+      }
 
-    .player h1 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 24px;
-      text-align: center;
-      color: #a0a0c0;
-    }
+      .player h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        text-align: center;
+        color: #a0a0c0;
+      }
 
-    .track-name {
-      text-align: center;
-      font-size: 14px;
-      color: #8888aa;
-      margin-bottom: 20px;
-      min-height: 20px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+      .track-name {
+        text-align: center;
+        font-size: 14px;
+        color: #8888aa;
+        margin-bottom: 20px;
+        min-height: 20px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
-    /* Progress bar */
-    .progress-container {
-      position: relative;
-      height: 40px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      user-select: none;
-    }
+      /* Progress bar */
+      .progress-container {
+        position: relative;
+        height: 40px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        user-select: none;
+      }
 
-    .progress-bg {
-      position: absolute;
-      top: 14px;
-      left: 0;
-      right: 0;
-      height: 12px;
-      background: #2a2a4a;
-      border-radius: 6px;
-      overflow: hidden;
-    }
+      .progress-bg {
+        position: absolute;
+        top: 14px;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: #2a2a4a;
+        border-radius: 6px;
+        overflow: hidden;
+      }
 
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #4a6cf7, #6a8cff);
-      border-radius: 6px;
-      transition: width 0.1s linear;
-    }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #4a6cf7, #6a8cff);
+        border-radius: 6px;
+        transition: width 0.1s linear;
+      }
 
-    .ab-region {
-      position: absolute;
-      top: 14px;
-      height: 12px;
-      background: rgba(255, 170, 50, 0.25);
-      border-radius: 6px;
-      pointer-events: none;
-    }
+      .ab-region {
+        position: absolute;
+        top: 14px;
+        height: 12px;
+        background: rgba(255, 170, 50, 0.25);
+        border-radius: 6px;
+        pointer-events: none;
+      }
 
-    .ab-marker {
-      position: absolute;
-      top: 6px;
-      width: 3px;
-      height: 28px;
-      border-radius: 2px;
-      pointer-events: none;
-    }
+      .ab-marker {
+        position: absolute;
+        top: 6px;
+        width: 3px;
+        height: 28px;
+        border-radius: 2px;
+        pointer-events: none;
+      }
 
-    .ab-marker.a { background: #ff9800; }
-    .ab-marker.b { background: #f44336; }
+      .ab-marker.a {
+        background: #ff9800;
+      }
+      .ab-marker.b {
+        background: #f44336;
+      }
 
-    .ab-label {
-      position: absolute;
-      top: -2px;
-      font-size: 10px;
-      font-weight: bold;
-      pointer-events: none;
-    }
+      .ab-label {
+        position: absolute;
+        top: -2px;
+        font-size: 10px;
+        font-weight: bold;
+        pointer-events: none;
+      }
 
-    .ab-label.a { color: #ff9800; }
-    .ab-label.b { color: #f44336; }
+      .ab-label.a {
+        color: #ff9800;
+      }
+      .ab-label.b {
+        color: #f44336;
+      }
 
-    .time-display {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #6a6a8a;
-      margin-bottom: 20px;
-      font-variant-numeric: tabular-nums;
-    }
+      .time-display {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #6a6a8a;
+        margin-bottom: 20px;
+        font-variant-numeric: tabular-nums;
+      }
 
-    /* Controls */
-    .controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
+      /* Controls */
+      .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
 
-    button {
-      background: none;
-      border: 2px solid #4a4a6a;
-      color: #c0c0e0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-      border-radius: 50%;
-    }
+      button {
+        background: none;
+        border: 2px solid #4a4a6a;
+        color: #c0c0e0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        border-radius: 50%;
+      }
 
-    button:hover { border-color: #6a8cff; color: #fff; }
-    button:disabled { opacity: 0.3; cursor: default; border-color: #4a4a6a; color: #c0c0e0; }
+      button:hover {
+        border-color: #6a8cff;
+        color: #fff;
+      }
+      button:disabled {
+        opacity: 0.3;
+        cursor: default;
+        border-color: #4a4a6a;
+        color: #c0c0e0;
+      }
 
-    .btn-lg { width: 56px; height: 56px; font-size: 32px; }
-    .btn-lg .material-icons-round { font-size: 32px; }
+      .btn-lg {
+        width: 56px;
+        height: 56px;
+        font-size: 32px;
+      }
+      .btn-lg .material-icons-round {
+        font-size: 32px;
+      }
 
-    /* Skip button groups */
-    .skip-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+      /* Skip button groups */
+      .skip-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    .skip-group .label {
-      font-size: 13px;
-      color: #6a6a8a;
-      display: flex;
-      align-items: center;
-    }
+      .skip-group .label {
+        font-size: 13px;
+        color: #6a6a8a;
+        display: flex;
+        align-items: center;
+      }
 
-    .skip-group .label .material-icons-round { font-size: 20px; }
+      .skip-group .label .material-icons-round {
+        font-size: 20px;
+      }
 
-    .skip-btn {
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 13px;
-      font-weight: 600;
-      width: auto;
-      height: auto;
-    }
+      .skip-btn {
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        width: auto;
+        height: auto;
+      }
 
-    /* A-B Repeat */
-    .ab-controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
+      /* A-B Repeat */
+      .ab-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
 
-    .ab-btn {
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      width: auto;
-      height: auto;
-    }
+      .ab-btn {
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        width: auto;
+        height: auto;
+      }
 
-    .ab-btn.active-a { border-color: #ff9800; color: #ff9800; }
-    .ab-btn.active-b { border-color: #f44336; color: #f44336; }
-    .ab-btn.looping { background: rgba(255, 170, 50, 0.15); border-color: #ff9800; color: #ff9800; }
+      .ab-btn.active-a {
+        border-color: #ff9800;
+        color: #ff9800;
+      }
+      .ab-btn.active-b {
+        border-color: #f44336;
+        color: #f44336;
+      }
+      .ab-btn.looping {
+        background: rgba(255, 170, 50, 0.15);
+        border-color: #ff9800;
+        color: #ff9800;
+      }
 
-    .ab-status {
-      font-size: 12px;
-      color: #8888aa;
-      min-width: 120px;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-    }
+      .ab-status {
+        font-size: 12px;
+        color: #8888aa;
+        min-width: 120px;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+      }
 
-    /* Volume */
-    .volume-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
+      /* Volume */
+      .volume-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
 
-    .volume-row label { font-size: 13px; color: #6a6a8a; }
+      .volume-row label {
+        font-size: 13px;
+        color: #6a6a8a;
+      }
 
-    input[type="range"] {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 6px;
-      background: #2a2a4a;
-      border-radius: 3px;
-      outline: none;
-    }
+      input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        height: 6px;
+        background: #2a2a4a;
+        border-radius: 3px;
+        outline: none;
+      }
 
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      background: #6a8cff;
-      border-radius: 50%;
-      cursor: pointer;
-    }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #6a8cff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
 
-    /* Speed */
-    .speed-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 24px;
-      justify-content: center;
-    }
+      /* Speed */
+      .speed-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 24px;
+        justify-content: center;
+      }
 
-    .speed-row label { font-size: 13px; color: #6a6a8a; }
+      .speed-row label {
+        font-size: 13px;
+        color: #6a6a8a;
+      }
 
-    .speed-btn {
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
-      width: auto;
-      height: auto;
-    }
+      .speed-btn {
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 12px;
+        width: auto;
+        height: auto;
+      }
 
-    .speed-btn.active { border-color: #6a8cff; color: #6a8cff; background: rgba(106, 140, 255, 0.1); }
+      .speed-btn.active {
+        border-color: #6a8cff;
+        color: #6a8cff;
+        background: rgba(106, 140, 255, 0.1);
+      }
 
-    /* Open file */
-    .open-btn {
-      width: 100%;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      border: 2px dashed #4a4a6a;
-    }
+      /* Open file */
+      .file-row {
+        display: flex;
+        gap: 8px;
+      }
 
-    .open-btn:hover { border-color: #6a8cff; }
+      .open-btn {
+        flex: 1;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border: 2px dashed #4a4a6a;
+      }
 
-    #file-input { display: none; }
-  </style>
-</head>
-<body>
-  <div class="player">
-    <h1>MP3 Player</h1>
-    <div class="track-name" id="track-name">ファイルを開いてください</div>
+      .open-btn:hover {
+        border-color: #6a8cff;
+      }
 
-    <div class="progress-container" id="progress-container">
-      <div class="progress-bg">
-        <div class="progress-fill" id="progress-fill"></div>
+      .history-btn {
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 14px;
+        font-weight: 600;
+        border: 2px solid #4a4a6a;
+        flex-shrink: 0;
+      }
+
+      .history-btn:hover {
+        border-color: #6a8cff;
+      }
+
+      #file-input {
+        display: none;
+      }
+
+      /* History Modal */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-overlay.open {
+        display: flex;
+      }
+
+      .modal {
+        background: #16213e;
+        border-radius: 16px;
+        padding: 24px;
+        width: 480px;
+        max-width: 90vw;
+        max-height: 70vh;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .modal-header h2 {
+        font-size: 16px;
+        color: #a0a0c0;
+      }
+
+      .modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+      }
+
+      .history-list {
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      .history-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+        outline: none;
+      }
+
+      .history-item:hover,
+      .history-item:focus-visible {
+        background: rgba(106, 140, 255, 0.1);
+      }
+
+      .history-item:focus-visible {
+        outline: 2px solid #6a8cff;
+        outline-offset: -2px;
+      }
+
+      .history-item:focus:not(:focus-visible) {
+        outline: none;
+      }
+
+      .history-item .material-icons-round {
+        color: #6a6a8a;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .history-item-info {
+        overflow: hidden;
+        min-width: 0;
+      }
+
+      .history-item-name {
+        font-size: 14px;
+        color: #e0e0e0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .history-item-path {
+        font-size: 11px;
+        color: #5a5a7a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+
+      .history-empty {
+        text-align: center;
+        color: #5a5a7a;
+        font-size: 13px;
+        padding: 24px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="player">
+      <h1>MP3 Player</h1>
+      <div class="track-name" id="track-name">ファイルを開いてください</div>
+
+      <div class="progress-container" id="progress-container">
+        <div class="progress-bg">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="ab-region" id="ab-region" style="display: none"></div>
+        <div class="ab-marker a" id="marker-a" style="display: none"></div>
+        <div class="ab-marker b" id="marker-b" style="display: none"></div>
+        <span class="ab-label a" id="label-a" style="display: none">A</span>
+        <span class="ab-label b" id="label-b" style="display: none">B</span>
       </div>
-      <div class="ab-region" id="ab-region" style="display:none;"></div>
-      <div class="ab-marker a" id="marker-a" style="display:none;"></div>
-      <div class="ab-marker b" id="marker-b" style="display:none;"></div>
-      <span class="ab-label a" id="label-a" style="display:none;">A</span>
-      <span class="ab-label b" id="label-b" style="display:none;">B</span>
-    </div>
 
-    <div class="time-display">
-      <span id="time-current">0:00</span>
-      <span id="time-duration">0:00</span>
-    </div>
-
-    <div class="controls">
-      <div class="skip-group">
-        <span class="label"><span class="material-icons-round">fast_rewind</span></span>
-        <button class="skip-btn" id="btn-back30" disabled>30s</button>
-        <button class="skip-btn" id="btn-back10" disabled>10s</button>
-        <button class="skip-btn" id="btn-back5" disabled>5s</button>
+      <div class="time-display">
+        <span id="time-current">0:00</span>
+        <span id="time-duration">0:00</span>
       </div>
-      <button class="btn-lg" id="btn-play" disabled title="再生/一時停止"><span class="material-icons-round">play_arrow</span></button>
-      <div class="skip-group">
-        <button class="skip-btn" id="btn-forward5" disabled>5s</button>
-        <button class="skip-btn" id="btn-forward10" disabled>10s</button>
-        <button class="skip-btn" id="btn-forward30" disabled>30s</button>
-        <span class="label"><span class="material-icons-round">fast_forward</span></span>
+
+      <div class="controls">
+        <div class="skip-group">
+          <span class="label"
+            ><span class="material-icons-round">fast_rewind</span></span
+          >
+          <button class="skip-btn" id="btn-back30" disabled>30s</button>
+          <button class="skip-btn" id="btn-back10" disabled>10s</button>
+          <button class="skip-btn" id="btn-back5" disabled>5s</button>
+        </div>
+        <button class="btn-lg" id="btn-play" disabled title="再生/一時停止">
+          <span class="material-icons-round">play_arrow</span>
+        </button>
+        <div class="skip-group">
+          <button class="skip-btn" id="btn-forward5" disabled>5s</button>
+          <button class="skip-btn" id="btn-forward10" disabled>10s</button>
+          <button class="skip-btn" id="btn-forward30" disabled>30s</button>
+          <span class="label"
+            ><span class="material-icons-round">fast_forward</span></span
+          >
+        </div>
+      </div>
+
+      <div class="ab-controls">
+        <button class="ab-btn" id="btn-a" disabled title="A地点を設定">
+          A
+        </button>
+        <span class="ab-status" id="ab-status">A-Bリピート: OFF</span>
+        <button class="ab-btn" id="btn-b" disabled title="B地点を設定">
+          B
+        </button>
+        <button class="ab-btn" id="btn-ab-clear" disabled title="リセット">
+          <span class="material-icons-round" style="font-size: 16px"
+            >close</span
+          >
+        </button>
+      </div>
+
+      <div class="volume-row">
+        <label
+          ><span
+            class="material-icons-round"
+            style="font-size: 18px; vertical-align: middle"
+            >volume_up</span
+          ></label
+        >
+        <input
+          type="range"
+          id="volume"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.8"
+        />
+      </div>
+
+      <div class="speed-row">
+        <label>速度:</label>
+        <button class="speed-btn" data-speed="0.5">0.5x</button>
+        <button class="speed-btn" data-speed="0.75">0.75x</button>
+        <button class="speed-btn active" data-speed="1">1x</button>
+        <button class="speed-btn" data-speed="1.25">1.25x</button>
+        <button class="speed-btn" data-speed="1.5">1.5x</button>
+        <button class="speed-btn" data-speed="2">2x</button>
+      </div>
+
+      <div class="file-row">
+        <button class="open-btn" id="btn-open">
+          <span
+            class="material-icons-round"
+            style="font-size: 18px; vertical-align: middle; margin-right: 6px"
+            >folder_open</span
+          >ファイルを開く
+        </button>
+        <button class="history-btn" id="btn-history" title="履歴">
+          <span
+            class="material-icons-round"
+            style="font-size: 20px; vertical-align: middle"
+            >history</span
+          >
+        </button>
+      </div>
+      <input
+        type="file"
+        id="file-input"
+        accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a"
+      />
+    </div>
+
+    <div class="modal-overlay" id="history-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2><span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px">history</span>最近開いたファイル</h2>
+          <button class="modal-close" id="btn-modal-close">
+            <span class="material-icons-round" style="font-size: 18px">close</span>
+          </button>
+        </div>
+        <div class="history-list" id="history-list"></div>
       </div>
     </div>
 
-    <div class="ab-controls">
-      <button class="ab-btn" id="btn-a" disabled title="A地点を設定">A</button>
-      <span class="ab-status" id="ab-status">A-Bリピート: OFF</span>
-      <button class="ab-btn" id="btn-b" disabled title="B地点を設定">B</button>
-      <button class="ab-btn" id="btn-ab-clear" disabled title="リセット"><span class="material-icons-round" style="font-size:16px">close</span></button>
-    </div>
+    <script>
+      const audio = new Audio();
+      audio.crossOrigin = "anonymous";
+      const $ = (id) => document.getElementById(id);
 
-    <div class="volume-row">
-      <label><span class="material-icons-round" style="font-size:18px;vertical-align:middle">volume_up</span></label>
-      <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
-    </div>
+      // Audio visualizer setup
+      let audioCtx, analyser, sourceNode, freqData;
+      let smoothBass = 0,
+        smoothMid = 0,
+        smoothHigh = 0,
+        smoothVol = 0;
+      let peakBass = 0,
+        peakVol = 0;
 
-    <div class="speed-row">
-      <label>速度:</label>
-      <button class="speed-btn" data-speed="0.5">0.5x</button>
-      <button class="speed-btn" data-speed="0.75">0.75x</button>
-      <button class="speed-btn active" data-speed="1">1x</button>
-      <button class="speed-btn" data-speed="1.25">1.25x</button>
-      <button class="speed-btn" data-speed="1.5">1.5x</button>
-      <button class="speed-btn" data-speed="2">2x</button>
-    </div>
+      function initAudioContext() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.smoothingTimeConstant = 0.3;
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        sourceNode = audioCtx.createMediaElementSource(audio);
+        sourceNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+      }
 
-    <button class="open-btn" id="btn-open"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px">folder_open</span>ファイルを開く</button>
-    <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a">
-  </div>
+      const playerEl = document.querySelector(".player");
 
-  <script>
-    const audio = new Audio();
-    const $ = (id) => document.getElementById(id);
+      function visualize() {
+        requestAnimationFrame(visualize);
+        if (!analyser || audio.paused) {
+          // Fade out smoothly
+          smoothBass *= 0.85;
+          smoothMid *= 0.85;
+          smoothHigh *= 0.85;
+          smoothVol *= 0.85;
+          peakBass *= 0.9;
+          peakVol *= 0.9;
+          if (smoothVol < 0.005) {
+            playerEl.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.4)";
+            playerEl.style.transform = "";
+            return;
+          }
+        } else {
+          analyser.getByteFrequencyData(freqData);
 
-    const els = {
-      trackName: $('track-name'),
-      progressContainer: $('progress-container'),
-      progressFill: $('progress-fill'),
-      timeCurrent: $('time-current'),
-      timeDuration: $('time-duration'),
-      btnPlay: $('btn-play'),
-      btnBack5: $('btn-back5'),
-      btnBack10: $('btn-back10'),
-      btnBack30: $('btn-back30'),
-      btnForward5: $('btn-forward5'),
-      btnForward10: $('btn-forward10'),
-      btnForward30: $('btn-forward30'),
-      btnA: $('btn-a'),
-      btnB: $('btn-b'),
-      btnAbClear: $('btn-ab-clear'),
-      abStatus: $('ab-status'),
-      abRegion: $('ab-region'),
-      markerA: $('marker-a'),
-      markerB: $('marker-b'),
-      labelA: $('label-a'),
-      labelB: $('label-b'),
-      volume: $('volume'),
-      btnOpen: $('btn-open'),
-      fileInput: $('file-input'),
-    };
+          // Raw bands - use max of slice for punchier response
+          const bassRaw = Math.max(...freqData.slice(0, 10)) / 255;
+          const midRaw = Math.max(...freqData.slice(10, 60)) / 255;
+          const highRaw = Math.max(...freqData.slice(60, 128)) / 255;
 
-    // State
-    let pointA = null;
-    let pointB = null;
-    let abLooping = false;
+          // Overall volume from all bins
+          let sum = 0;
+          for (let i = 0; i < freqData.length; i++) sum += freqData[i];
+          const volRaw = sum / (freqData.length * 255);
 
-    // Format time
-    function fmt(sec) {
-      if (!isFinite(sec)) return '0:00';
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
+          // Apply cubic curve to exaggerate dynamics
+          const bassCurved = Math.pow(bassRaw, 1.5);
+          const midCurved = Math.pow(midRaw, 1.5);
+          const highCurved = Math.pow(highRaw, 1.5);
+          const volCurved = Math.pow(volRaw, 1.2);
 
-    // Load file
-    function loadFile(file) {
-      const url = URL.createObjectURL(file);
-      audio.src = url;
-      els.trackName.textContent = file.name;
-      clearAB();
-      audio.load();
-      audio.addEventListener('loadedmetadata', () => {
-        els.timeDuration.textContent = fmt(audio.duration);
-        setControlsEnabled(true);
-      }, { once: true });
-    }
+          // Smooth with fast attack, slower release
+          const attack = 0.7,
+            release = 0.88;
+          smoothBass =
+            bassCurved > smoothBass
+              ? bassCurved * attack + smoothBass * (1 - attack)
+              : bassCurved * (1 - release) + smoothBass * release;
+          smoothMid =
+            midCurved > smoothMid
+              ? midCurved * attack + smoothMid * (1 - attack)
+              : midCurved * (1 - release) + smoothMid * release;
+          smoothHigh =
+            highCurved > smoothHigh
+              ? highCurved * attack + smoothHigh * (1 - attack)
+              : highCurved * (1 - release) + smoothHigh * release;
+          smoothVol =
+            volCurved > smoothVol
+              ? volCurved * attack + smoothVol * (1 - attack)
+              : volCurved * (1 - release) + smoothVol * release;
 
-    function setControlsEnabled(enabled) {
-      els.btnPlay.disabled = !enabled;
-      els.btnBack5.disabled = !enabled;
-      els.btnBack10.disabled = !enabled;
-      els.btnBack30.disabled = !enabled;
-      els.btnForward5.disabled = !enabled;
-      els.btnForward10.disabled = !enabled;
-      els.btnForward30.disabled = !enabled;
-      els.btnA.disabled = !enabled;
-      els.btnB.disabled = !enabled;
-      els.btnAbClear.disabled = !enabled;
-    }
+          // Peak hold for extra punch
+          peakBass = Math.max(peakBass * 0.92, smoothBass);
+          peakVol = Math.max(peakVol * 0.92, smoothVol);
+        }
 
-    // Open file
-    els.btnOpen.addEventListener('click', async () => {
-      if (window.showOpenFilePicker) {
+        // Glow layers: bass = inner glow, mid = mid glow, high = outer glow
+        const innerSpread = Math.round(4 + smoothBass * 80);
+        const midSpread = Math.round(8 + smoothMid * 100);
+        const outerSpread = Math.round(12 + smoothHigh * 60);
+        const peakSpread = Math.round(peakBass * 120);
+
+        const innerAlpha = (smoothBass * 0.95).toFixed(2);
+        const midAlpha = (smoothMid * 0.7).toFixed(2);
+        const outerAlpha = (smoothHigh * 0.5).toFixed(2);
+        const peakAlpha = (peakBass * 0.3).toFixed(2);
+
+        // Color: quiet=blue, mid=purple, loud=hot pink/red
+        const energy = smoothVol;
+        const r1 = Math.round(60 + energy * 195);
+        const g1 = Math.round(100 - energy * 60);
+        const b1 = Math.round(255 - energy * 100);
+
+        const r2 = Math.round(140 + smoothMid * 115);
+        const g2 = Math.round(50 + smoothMid * 30);
+        const b2 = Math.round(220 - smoothMid * 80);
+
+        const r3 = Math.round(80 + smoothHigh * 175);
+        const g3 = Math.round(60 + smoothHigh * 140);
+        const b3 = Math.round(255);
+
+        // Scale effect on bass hits
+        const scale = 1 + peakBass * 0.015;
+
+        playerEl.style.boxShadow = [
+          `0 0 ${innerSpread}px ${Math.round(
+            innerSpread * 0.3
+          )}px rgba(${r1}, ${g1}, ${b1}, ${innerAlpha})`,
+          `0 0 ${midSpread}px ${Math.round(
+            midSpread * 0.2
+          )}px rgba(${r2}, ${g2}, ${b2}, ${midAlpha})`,
+          `0 0 ${outerSpread}px ${Math.round(
+            outerSpread * 0.3
+          )}px rgba(${r3}, ${g3}, ${b3}, ${outerAlpha})`,
+          `0 0 ${peakSpread}px rgba(255, 255, 255, ${peakAlpha})`,
+          "0 8px 32px rgba(0, 0, 0, 0.4)",
+        ].join(", ");
+
+        playerEl.style.transform = `scale(${scale.toFixed(4)})`;
+      }
+
+      requestAnimationFrame(visualize);
+
+      const els = {
+        trackName: $("track-name"),
+        progressContainer: $("progress-container"),
+        progressFill: $("progress-fill"),
+        timeCurrent: $("time-current"),
+        timeDuration: $("time-duration"),
+        btnPlay: $("btn-play"),
+        btnBack5: $("btn-back5"),
+        btnBack10: $("btn-back10"),
+        btnBack30: $("btn-back30"),
+        btnForward5: $("btn-forward5"),
+        btnForward10: $("btn-forward10"),
+        btnForward30: $("btn-forward30"),
+        btnA: $("btn-a"),
+        btnB: $("btn-b"),
+        btnAbClear: $("btn-ab-clear"),
+        abStatus: $("ab-status"),
+        abRegion: $("ab-region"),
+        markerA: $("marker-a"),
+        markerB: $("marker-b"),
+        labelA: $("label-a"),
+        labelB: $("label-b"),
+        volume: $("volume"),
+        btnOpen: $("btn-open"),
+        fileInput: $("file-input"),
+      };
+
+      // History (IndexedDB for file handles, localStorage for metadata)
+      const HISTORY_KEY = "mp3player_history";
+      const HISTORY_MAX = 20;
+      const DB_NAME = "mp3player";
+      const DB_STORE = "fileHandles";
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function saveHandleToDB(id, handle) {
+        const db = await openDB();
+        const tx = db.transaction(DB_STORE, "readwrite");
+        tx.objectStore(DB_STORE).put(handle, id);
+        return new Promise((resolve, reject) => {
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+
+      async function getHandleFromDB(id) {
+        const db = await openDB();
+        const tx = db.transaction(DB_STORE, "readonly");
+        const req = tx.objectStore(DB_STORE).get(id);
+        return new Promise((resolve, reject) => {
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function getHistory() {
         try {
-          const [handle] = await window.showOpenFilePicker({
-            types: [{
-              description: 'Audio Files',
-              accept: { 'audio/*': ['.mp3', '.wav', '.ogg', '.flac', '.m4a'] },
-            }],
-            multiple: false,
-          });
-          const file = await handle.getFile();
-          loadFile(file);
-        } catch (e) {
-          if (e.name !== 'AbortError') console.error(e);
+          return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        } catch { return []; }
+      }
+
+      function addToHistory(name, handleId) {
+        let history = getHistory();
+        // Remove duplicate
+        history = history.filter(h => h.handleId !== handleId);
+        history.unshift({ name, handleId, openedAt: Date.now() });
+        if (history.length > HISTORY_MAX) history = history.slice(0, HISTORY_MAX);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      }
+
+      function renderHistory() {
+        const list = $("history-list");
+        const history = getHistory();
+        if (history.length === 0) {
+          list.innerHTML = '<div class="history-empty">履歴はありません</div>';
+          return;
         }
-      } else {
-        els.fileInput.click();
+        list.innerHTML = history.map(h => `
+          <div class="history-item" data-handle-id="${h.handleId}" tabindex="0" role="button">
+            <span class="material-icons-round">music_note</span>
+            <div class="history-item-info">
+              <div class="history-item-name">${h.name}</div>
+              <div class="history-item-path">${new Date(h.openedAt).toLocaleString("ja-JP")}</div>
+            </div>
+          </div>
+        `).join("");
+        // Focus first item
+        const first = list.querySelector(".history-item");
+        if (first) first.focus();
       }
-    });
 
-    els.fileInput.addEventListener('change', (e) => {
-      if (e.target.files[0]) loadFile(e.target.files[0]);
-    });
-
-    // Play / Pause
-    els.btnPlay.addEventListener('click', () => {
-      if (audio.paused) {
-        audio.play();
-        els.btnPlay.innerHTML = '<span class="material-icons-round">pause</span>';
-      } else {
-        audio.pause();
-        els.btnPlay.innerHTML = '<span class="material-icons-round">play_arrow</span>';
-      }
-    });
-
-    audio.addEventListener('ended', () => {
-      els.btnPlay.innerHTML = '<span class="material-icons-round">play_arrow</span>';
-    });
-
-    // Skip
-    function skip(sec) { audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + sec)); }
-    els.btnBack5.addEventListener('click', () => skip(-5));
-    els.btnBack10.addEventListener('click', () => skip(-10));
-    els.btnBack30.addEventListener('click', () => skip(-30));
-    els.btnForward5.addEventListener('click', () => skip(5));
-    els.btnForward10.addEventListener('click', () => skip(10));
-    els.btnForward30.addEventListener('click', () => skip(30));
-
-    // Progress bar seek
-    els.progressContainer.addEventListener('click', (e) => {
-      if (!audio.src) return;
-      const rect = els.progressContainer.getBoundingClientRect();
-      const ratio = (e.clientX - rect.left) / rect.width;
-      audio.currentTime = ratio * audio.duration;
-    });
-
-    // Time update
-    audio.addEventListener('timeupdate', () => {
-      if (!isFinite(audio.duration)) return;
-      const pct = (audio.currentTime / audio.duration) * 100;
-      els.progressFill.style.width = pct + '%';
-      els.timeCurrent.textContent = fmt(audio.currentTime);
-
-      // A-B loop
-      if (abLooping && pointA !== null && pointB !== null) {
-        if (audio.currentTime >= pointB) {
-          audio.currentTime = pointA;
-        }
-      }
-    });
-
-    // Volume
-    audio.volume = 0.8;
-    els.volume.addEventListener('input', (e) => {
-      audio.volume = parseFloat(e.target.value);
-    });
-
-    // Speed
-    document.querySelectorAll('.speed-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        audio.playbackRate = parseFloat(btn.dataset.speed);
+      // History modal
+      $("btn-history").addEventListener("click", () => {
+        renderHistory();
+        $("history-modal").classList.add("open");
       });
-    });
 
-    // A-B Repeat
-    function positionToPercent(time) {
-      return (time / audio.duration) * 100;
-    }
+      $("btn-modal-close").addEventListener("click", () => {
+        $("history-modal").classList.remove("open");
+      });
 
-    function updateABVisuals() {
-      if (pointA !== null) {
-        const pct = positionToPercent(pointA);
-        els.markerA.style.display = 'block';
-        els.markerA.style.left = `calc(${pct}% - 1px)`;
-        els.labelA.style.display = 'block';
-        els.labelA.style.left = `calc(${pct}% - 3px)`;
-      } else {
-        els.markerA.style.display = 'none';
-        els.labelA.style.display = 'none';
+      $("history-modal").addEventListener("click", (e) => {
+        if (e.target === $("history-modal")) {
+          $("history-modal").classList.remove("open");
+        }
+      });
+
+      // Trap focus inside modal
+      $("history-modal").addEventListener("keydown", (e) => {
+        if (e.key !== "Tab") return;
+        const modal = $("history-modal").querySelector(".modal");
+        const focusable = modal.querySelectorAll('button, [tabindex="0"]');
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      async function openFromHistory(item) {
+        const handleId = item.dataset.handleId;
+        try {
+          const handle = await getHandleFromDB(handleId);
+          if (!handle) {
+            alert("このファイルのハンドルが見つかりません。");
+            return;
+          }
+          const perm = await handle.requestPermission({ mode: "read" });
+          if (perm !== "granted") return;
+          const file = await handle.getFile();
+          loadFile(file, handle);
+          $("history-modal").classList.remove("open");
+        } catch (e) {
+          console.error(e);
+          alert("ファイルを開けませんでした。");
+        }
       }
 
-      if (pointB !== null) {
-        const pct = positionToPercent(pointB);
-        els.markerB.style.display = 'block';
-        els.markerB.style.left = `calc(${pct}% - 1px)`;
-        els.labelB.style.display = 'block';
-        els.labelB.style.left = `calc(${pct}% - 3px)`;
-      } else {
-        els.markerB.style.display = 'none';
-        els.labelB.style.display = 'none';
+      $("history-list").addEventListener("click", (e) => {
+        const item = e.target.closest(".history-item");
+        if (item) openFromHistory(item);
+      });
+
+      $("history-list").addEventListener("keydown", (e) => {
+        const item = e.target.closest(".history-item");
+        if (!item) return;
+        if (e.key === "Enter") {
+          e.preventDefault();
+          openFromHistory(item);
+        }
+      });
+
+      // State
+      let pointA = null;
+      let pointB = null;
+      let abLooping = false;
+
+      // Format time
+      function fmt(sec) {
+        if (!isFinite(sec)) return "0:00";
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}:${s.toString().padStart(2, "0")}`;
       }
 
-      if (pointA !== null && pointB !== null) {
-        const pctA = positionToPercent(pointA);
-        const pctB = positionToPercent(pointB);
-        els.abRegion.style.display = 'block';
-        els.abRegion.style.left = pctA + '%';
-        els.abRegion.style.width = (pctB - pctA) + '%';
-      } else {
-        els.abRegion.style.display = 'none';
+      // Load file
+      function loadFile(file, handle) {
+        initAudioContext();
+        const url = URL.createObjectURL(file);
+        audio.src = url;
+        els.trackName.textContent = file.name;
+        clearAB();
+        audio.load();
+        audio.addEventListener(
+          "loadedmetadata",
+          () => {
+            els.timeDuration.textContent = fmt(audio.duration);
+            setControlsEnabled(true);
+          },
+          { once: true }
+        );
+        // Save to history
+        if (handle) {
+          const handleId = file.name + "_" + file.size;
+          saveHandleToDB(handleId, handle);
+          addToHistory(file.name, handleId);
+        }
       }
 
-      // Status text
-      if (pointA !== null && pointB !== null) {
-        els.abStatus.textContent = `A-Bリピート: ${fmt(pointA)} → ${fmt(pointB)}`;
-        els.btnA.classList.add('active-a');
-        els.btnB.classList.add('active-b');
-      } else if (pointA !== null) {
-        els.abStatus.textContent = `A: ${fmt(pointA)} — B地点を設定`;
-        els.btnA.classList.add('active-a');
-        els.btnB.classList.remove('active-b');
-      } else {
-        els.abStatus.textContent = 'A-Bリピート: OFF';
-        els.btnA.classList.remove('active-a');
-        els.btnB.classList.remove('active-b');
+      function setControlsEnabled(enabled) {
+        els.btnPlay.disabled = !enabled;
+        els.btnBack5.disabled = !enabled;
+        els.btnBack10.disabled = !enabled;
+        els.btnBack30.disabled = !enabled;
+        els.btnForward5.disabled = !enabled;
+        els.btnForward10.disabled = !enabled;
+        els.btnForward30.disabled = !enabled;
+        els.btnA.disabled = !enabled;
+        els.btnB.disabled = !enabled;
+        els.btnAbClear.disabled = !enabled;
       }
 
-      if (abLooping) {
-        els.btnA.classList.add('looping');
-        els.btnB.classList.add('looping');
-      } else {
-        els.btnA.classList.remove('looping');
-        els.btnB.classList.remove('looping');
-      }
-    }
+      // Open file
+      els.btnOpen.addEventListener("click", async () => {
+        if (window.showOpenFilePicker) {
+          try {
+            const [handle] = await window.showOpenFilePicker({
+              types: [
+                {
+                  description: "Audio Files",
+                  accept: {
+                    "audio/*": [".mp3", ".wav", ".ogg", ".flac", ".m4a"],
+                  },
+                },
+              ],
+              multiple: false,
+            });
+            const file = await handle.getFile();
+            loadFile(file, handle);
+          } catch (e) {
+            if (e.name !== "AbortError") console.error(e);
+          }
+        } else {
+          els.fileInput.click();
+        }
+      });
 
-    els.btnA.addEventListener('click', () => {
-      if (pointA !== null && pointB !== null) {
-        // Already have both points - reset and set new A
+      els.fileInput.addEventListener("change", (e) => {
+        if (e.target.files[0]) loadFile(e.target.files[0]);
+      });
+
+      // Play / Pause
+      els.btnPlay.addEventListener("click", () => {
+        if (audio.paused) {
+          audio.play();
+          els.btnPlay.innerHTML =
+            '<span class="material-icons-round">pause</span>';
+        } else {
+          audio.pause();
+          els.btnPlay.innerHTML =
+            '<span class="material-icons-round">play_arrow</span>';
+        }
+      });
+
+      audio.addEventListener("ended", () => {
+        els.btnPlay.innerHTML =
+          '<span class="material-icons-round">play_arrow</span>';
+      });
+
+      // Skip
+      function skip(sec) {
+        audio.currentTime = Math.max(
+          0,
+          Math.min(audio.duration, audio.currentTime + sec)
+        );
+      }
+      els.btnBack5.addEventListener("click", () => skip(-5));
+      els.btnBack10.addEventListener("click", () => skip(-10));
+      els.btnBack30.addEventListener("click", () => skip(-30));
+      els.btnForward5.addEventListener("click", () => skip(5));
+      els.btnForward10.addEventListener("click", () => skip(10));
+      els.btnForward30.addEventListener("click", () => skip(30));
+
+      // Progress bar seek
+      els.progressContainer.addEventListener("click", (e) => {
+        if (!audio.src) return;
+        const rect = els.progressContainer.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = ratio * audio.duration;
+      });
+
+      // Time update
+      audio.addEventListener("timeupdate", () => {
+        if (!isFinite(audio.duration)) return;
+        const pct = (audio.currentTime / audio.duration) * 100;
+        els.progressFill.style.width = pct + "%";
+        els.timeCurrent.textContent = fmt(audio.currentTime);
+
+        // A-B loop
+        if (abLooping && pointA !== null && pointB !== null) {
+          if (audio.currentTime >= pointB) {
+            audio.currentTime = pointA;
+          }
+        }
+      });
+
+      // Volume
+      audio.volume = 0.8;
+      els.volume.addEventListener("input", (e) => {
+        audio.volume = parseFloat(e.target.value);
+      });
+
+      // Speed
+      document.querySelectorAll(".speed-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".speed-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          audio.playbackRate = parseFloat(btn.dataset.speed);
+        });
+      });
+
+      // A-B Repeat
+      function positionToPercent(time) {
+        return (time / audio.duration) * 100;
+      }
+
+      function updateABVisuals() {
+        if (pointA !== null) {
+          const pct = positionToPercent(pointA);
+          els.markerA.style.display = "block";
+          els.markerA.style.left = `calc(${pct}% - 1px)`;
+          els.labelA.style.display = "block";
+          els.labelA.style.left = `calc(${pct}% - 3px)`;
+        } else {
+          els.markerA.style.display = "none";
+          els.labelA.style.display = "none";
+        }
+
+        if (pointB !== null) {
+          const pct = positionToPercent(pointB);
+          els.markerB.style.display = "block";
+          els.markerB.style.left = `calc(${pct}% - 1px)`;
+          els.labelB.style.display = "block";
+          els.labelB.style.left = `calc(${pct}% - 3px)`;
+        } else {
+          els.markerB.style.display = "none";
+          els.labelB.style.display = "none";
+        }
+
+        if (pointA !== null && pointB !== null) {
+          const pctA = positionToPercent(pointA);
+          const pctB = positionToPercent(pointB);
+          els.abRegion.style.display = "block";
+          els.abRegion.style.left = pctA + "%";
+          els.abRegion.style.width = pctB - pctA + "%";
+        } else {
+          els.abRegion.style.display = "none";
+        }
+
+        // Status text
+        if (pointA !== null && pointB !== null) {
+          els.abStatus.textContent = `A-Bリピート: ${fmt(pointA)} → ${fmt(
+            pointB
+          )}`;
+          els.btnA.classList.add("active-a");
+          els.btnB.classList.add("active-b");
+        } else if (pointA !== null) {
+          els.abStatus.textContent = `A: ${fmt(pointA)} — B地点を設定`;
+          els.btnA.classList.add("active-a");
+          els.btnB.classList.remove("active-b");
+        } else {
+          els.abStatus.textContent = "A-Bリピート: OFF";
+          els.btnA.classList.remove("active-a");
+          els.btnB.classList.remove("active-b");
+        }
+
+        if (abLooping) {
+          els.btnA.classList.add("looping");
+          els.btnB.classList.add("looping");
+        } else {
+          els.btnA.classList.remove("looping");
+          els.btnB.classList.remove("looping");
+        }
+      }
+
+      els.btnA.addEventListener("click", () => {
+        if (pointA !== null && pointB !== null) {
+          // Already have both points - reset and set new A
+          pointB = null;
+          abLooping = false;
+        }
+        pointA = audio.currentTime;
+        updateABVisuals();
+      });
+
+      els.btnB.addEventListener("click", () => {
+        if (pointA === null) return;
+        const b = audio.currentTime;
+        if (b <= pointA) return; // B must be after A
+        pointB = b;
+        abLooping = true;
+        audio.currentTime = pointA;
+        updateABVisuals();
+      });
+
+      function clearAB() {
+        pointA = null;
         pointB = null;
         abLooping = false;
+        updateABVisuals();
       }
-      pointA = audio.currentTime;
-      updateABVisuals();
-    });
 
-    els.btnB.addEventListener('click', () => {
-      if (pointA === null) return;
-      const b = audio.currentTime;
-      if (b <= pointA) return; // B must be after A
-      pointB = b;
-      abLooping = true;
-      audio.currentTime = pointA;
-      updateABVisuals();
-    });
+      els.btnAbClear.addEventListener("click", clearAB);
 
-    function clearAB() {
-      pointA = null;
-      pointB = null;
-      abLooping = false;
-      updateABVisuals();
-    }
-
-    els.btnAbClear.addEventListener('click', clearAB);
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
-      switch (e.code) {
-        case 'Space':
-          e.preventDefault();
-          els.btnPlay.click();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          els.btnBack5.click();
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          els.btnForward5.click();
-          break;
-        case 'KeyA':
-          if (!els.btnA.disabled) els.btnA.click();
-          break;
-        case 'KeyB':
-          if (!els.btnB.disabled) els.btnB.click();
-          break;
-        case 'Escape':
-          if (!els.btnAbClear.disabled) els.btnAbClear.click();
-          break;
-      }
-    });
-  </script>
-</body>
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        switch (e.code) {
+          case "Space":
+            e.preventDefault();
+            els.btnPlay.click();
+            break;
+          case "ArrowLeft":
+            e.preventDefault();
+            els.btnBack5.click();
+            break;
+          case "ArrowRight":
+            e.preventDefault();
+            els.btnForward5.click();
+            break;
+          case "KeyA":
+            if (!els.btnA.disabled) els.btnA.click();
+            break;
+          case "KeyB":
+            if (!els.btnB.disabled) els.btnB.click();
+            break;
+          case "Escape":
+            if ($("history-modal").classList.contains("open")) {
+              $("history-modal").classList.remove("open");
+            } else if (!els.btnAbClear.disabled) {
+              els.btnAbClear.click();
+            }
+            break;
+        }
+      });
+    </script>
+  </body>
 </html>
