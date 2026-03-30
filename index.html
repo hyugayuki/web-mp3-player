@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MP3 Player</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -119,7 +120,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       margin-bottom: 24px;
     }
 
@@ -127,19 +128,44 @@
       background: none;
       border: 2px solid #4a4a6a;
       color: #c0c0e0;
-      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.15s;
+      border-radius: 50%;
     }
 
     button:hover { border-color: #6a8cff; color: #fff; }
     button:disabled { opacity: 0.3; cursor: default; border-color: #4a4a6a; color: #c0c0e0; }
 
-    .btn-sm { width: 40px; height: 40px; font-size: 16px; }
-    .btn-lg { width: 56px; height: 56px; font-size: 22px; }
+    .btn-lg { width: 56px; height: 56px; font-size: 32px; }
+    .btn-lg .material-icons-round { font-size: 32px; }
+
+    /* Skip button groups */
+    .skip-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .skip-group .label {
+      font-size: 13px;
+      color: #6a6a8a;
+      display: flex;
+      align-items: center;
+    }
+
+    .skip-group .label .material-icons-round { font-size: 20px; }
+
+    .skip-btn {
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      width: auto;
+      height: auto;
+    }
 
     /* A-B Repeat */
     .ab-controls {
@@ -257,20 +283,30 @@
     </div>
 
     <div class="controls">
-      <button class="btn-sm" id="btn-back" disabled title="5秒戻る">&#9194;</button>
-      <button class="btn-lg" id="btn-play" disabled title="再生/一時停止">&#9654;</button>
-      <button class="btn-sm" id="btn-forward" disabled title="5秒進む">&#9193;</button>
+      <div class="skip-group">
+        <span class="label"><span class="material-icons-round">fast_rewind</span></span>
+        <button class="skip-btn" id="btn-back30" disabled>30s</button>
+        <button class="skip-btn" id="btn-back10" disabled>10s</button>
+        <button class="skip-btn" id="btn-back5" disabled>5s</button>
+      </div>
+      <button class="btn-lg" id="btn-play" disabled title="再生/一時停止"><span class="material-icons-round">play_arrow</span></button>
+      <div class="skip-group">
+        <button class="skip-btn" id="btn-forward5" disabled>5s</button>
+        <button class="skip-btn" id="btn-forward10" disabled>10s</button>
+        <button class="skip-btn" id="btn-forward30" disabled>30s</button>
+        <span class="label"><span class="material-icons-round">fast_forward</span></span>
+      </div>
     </div>
 
     <div class="ab-controls">
       <button class="ab-btn" id="btn-a" disabled title="A地点を設定">A</button>
       <span class="ab-status" id="ab-status">A-Bリピート: OFF</span>
       <button class="ab-btn" id="btn-b" disabled title="B地点を設定">B</button>
-      <button class="ab-btn" id="btn-ab-clear" disabled title="リセット">✕</button>
+      <button class="ab-btn" id="btn-ab-clear" disabled title="リセット"><span class="material-icons-round" style="font-size:16px">close</span></button>
     </div>
 
     <div class="volume-row">
-      <label>&#128264;</label>
+      <label><span class="material-icons-round" style="font-size:18px;vertical-align:middle">volume_up</span></label>
       <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8">
     </div>
 
@@ -284,7 +320,7 @@
       <button class="speed-btn" data-speed="2">2x</button>
     </div>
 
-    <button class="open-btn" id="btn-open">&#128193; ファイルを開く</button>
+    <button class="open-btn" id="btn-open"><span class="material-icons-round" style="font-size:18px;vertical-align:middle;margin-right:6px">folder_open</span>ファイルを開く</button>
     <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a">
   </div>
 
@@ -299,8 +335,12 @@
       timeCurrent: $('time-current'),
       timeDuration: $('time-duration'),
       btnPlay: $('btn-play'),
-      btnBack: $('btn-back'),
-      btnForward: $('btn-forward'),
+      btnBack5: $('btn-back5'),
+      btnBack10: $('btn-back10'),
+      btnBack30: $('btn-back30'),
+      btnForward5: $('btn-forward5'),
+      btnForward10: $('btn-forward10'),
+      btnForward30: $('btn-forward30'),
       btnA: $('btn-a'),
       btnB: $('btn-b'),
       btnAbClear: $('btn-ab-clear'),
@@ -343,8 +383,12 @@
 
     function setControlsEnabled(enabled) {
       els.btnPlay.disabled = !enabled;
-      els.btnBack.disabled = !enabled;
-      els.btnForward.disabled = !enabled;
+      els.btnBack5.disabled = !enabled;
+      els.btnBack10.disabled = !enabled;
+      els.btnBack30.disabled = !enabled;
+      els.btnForward5.disabled = !enabled;
+      els.btnForward10.disabled = !enabled;
+      els.btnForward30.disabled = !enabled;
       els.btnA.disabled = !enabled;
       els.btnB.disabled = !enabled;
       els.btnAbClear.disabled = !enabled;
@@ -379,20 +423,25 @@
     els.btnPlay.addEventListener('click', () => {
       if (audio.paused) {
         audio.play();
-        els.btnPlay.innerHTML = '&#9646;&#9646;';
+        els.btnPlay.innerHTML = '<span class="material-icons-round">pause</span>';
       } else {
         audio.pause();
-        els.btnPlay.innerHTML = '&#9654;';
+        els.btnPlay.innerHTML = '<span class="material-icons-round">play_arrow</span>';
       }
     });
 
     audio.addEventListener('ended', () => {
-      els.btnPlay.innerHTML = '&#9654;';
+      els.btnPlay.innerHTML = '<span class="material-icons-round">play_arrow</span>';
     });
 
     // Skip
-    els.btnBack.addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 5); });
-    els.btnForward.addEventListener('click', () => { audio.currentTime = Math.min(audio.duration, audio.currentTime + 5); });
+    function skip(sec) { audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + sec)); }
+    els.btnBack5.addEventListener('click', () => skip(-5));
+    els.btnBack10.addEventListener('click', () => skip(-10));
+    els.btnBack30.addEventListener('click', () => skip(-30));
+    els.btnForward5.addEventListener('click', () => skip(5));
+    els.btnForward10.addEventListener('click', () => skip(10));
+    els.btnForward30.addEventListener('click', () => skip(30));
 
     // Progress bar seek
     els.progressContainer.addEventListener('click', (e) => {
@@ -533,11 +582,11 @@
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          els.btnBack.click();
+          els.btnBack5.click();
           break;
         case 'ArrowRight':
           e.preventDefault();
-          els.btnForward.click();
+          els.btnForward5.click();
           break;
         case 'KeyA':
           if (!els.btnA.disabled) els.btnA.click();
